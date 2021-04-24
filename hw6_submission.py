@@ -164,8 +164,29 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
 
     # BEGIN_YOUR_CODE (our solution is 17 lines of code, but don't worry if you deviate from this)
-    raise Exception('Not implemented yet')
+    return MiniMax(gameState, self.depth, self.index)[1]
     # END_YOUR_CODE
+
+def MiniMax(gameState, depth, agent):
+  if depth == 0 or gameState.isWin() or gameState.isLose():
+    return [gameState.getScore(), Directions.STOP]
+  if agent == 0:
+    maxEval = -9999999
+    for action in gameState.getLegalActions(0):
+      currEval = MiniMax(gameState.generateSuccessor(0, action), depth - 1, 1)[0]
+      if currEval > maxEval:
+        maxEval = currEval
+        winningAction = action
+    return [maxEval, winningAction]
+  else:
+    minEval = 9999999
+    for i in range(gameState.getNumAgents() - 1):
+      for action in gameState.getLegalActions(i+1):
+        currEval = MiniMax(gameState.generateSuccessor(i+1, action), depth, 0)[0]
+        if currEval < minEval:
+          minEval = currEval
+          winningAction = action
+    return [minEval, winningAction]
 
 ######################################################################################
 # Problem 2a: implementing alpha-beta
@@ -181,7 +202,36 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
 
     # BEGIN_YOUR_CODE (our solution is 32 lines of code, but don't worry if you deviate from this)
-    raise Exception('Not implemented yet')
+    alpha = -99999
+    beta = 99999
+    return MiniMaxAlpha(gameState, self.depth, alpha, beta, self.index)[1]
+
+def MiniMaxAlpha(gameState, depth, alpha, beta, agent):
+  if depth == 0 or gameState.isWin() or gameState.isLose():
+    return [gameState.getScore(), Directions.STOP]
+  if agent == 0:
+    maxEval = -9999999
+    for action in gameState.getLegalActions(0):
+      currEval = MiniMaxAlpha(gameState.generateSuccessor(0, action), depth - 1, alpha, beta, 1)[0]
+      if currEval > maxEval:
+        maxEval = currEval
+        winningAction = action
+        alpha = max(alpha, currEval)
+        if beta <= alpha:
+          break
+    return [maxEval, winningAction]
+  else:
+    minEval = 9999999
+    for i in range(gameState.getNumAgents() - 1):
+      for action in gameState.getLegalActions(i+1):
+        currEval = MiniMaxAlpha(gameState.generateSuccessor(i+1, action), depth, alpha, beta, 0)[0]
+        if currEval < minEval:
+          minEval = currEval
+          winningAction = action
+          beta = min(beta, currEval)
+          if beta <= alpha:
+            break
+    return [minEval, winningAction]
     # END_YOUR_CODE
 
 ######################################################################################
@@ -201,7 +251,29 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
 
     # BEGIN_YOUR_CODE (our solution is 17 lines of code, but don't worry if you deviate from this)
-    raise Exception('Not implemented yet')
+    return ExpectiMax(gameState, self.depth, self.index)[1]
+
+def ExpectiMax(gameState, depth, agent):
+  if depth == 0 or gameState.isWin() or gameState.isLose():
+    return [gameState.getScore(), Directions.STOP]
+  if agent == 0:
+    maxEval = -9999999
+    for action in gameState.getLegalActions(0):
+      currEval = ExpectiMax(gameState.generateSuccessor(0, action), depth - 1, 1)[0]
+      if currEval > maxEval:
+        maxEval = currEval
+        winningAction = action
+    return [maxEval, winningAction]
+  else:
+    minEval = 9999999
+    for i in range(gameState.getNumAgents() - 1):
+      actions = gameState.getLegalActions(i+1)
+      action = random.choice(actions)
+      currEval = ExpectiMax(gameState.generateSuccessor(i+1, action), depth, 0)[0]
+      if currEval < minEval:
+        minEval = currEval
+        winningAction = action
+    return [minEval, winningAction]    
     # END_YOUR_CODE
 
 ######################################################################################
@@ -211,14 +283,36 @@ def betterEvaluationFunction(currentGameState):
     """
       Your extreme, unstoppable evaluation function (problem 4).
 
-      DESCRIPTION: <write something here so we know what you did>
+      DESCRIPTION: minimax function with changed 
+      motivation when ghosts are further away.
     """
 
     # BEGIN_YOUR_CODE (our solution is 17 lines of code, but don't worry if you deviate from this)
-    raise Exception('Not implemented yet')
+    pacman = currentGameState.getPacmanPosition()
+    ghosts = currentGameState.getGhostPositions()
+    close = False
+    for ghost in ghosts:
+      if [abs(pacman[0] - ghost[0]) < 3] and [abs(pacman[1] - ghost[1]) < 3]:
+        print("spoooooky")
+        close = True
+        break
+    if close: 
+      return MiniMax(currentGameState, 2, 0)[1]
+    else: 
+      maxEval = -9999999
+      for action in gameState.getLegalActions(0):
+        currEval = MiniMax(gameState.generateSuccessor(0, action), depth - 1, 1)[0]
+        if currEval > maxEval:
+          maxEval = currEval
+          winningAction = action
+      return winningAction
     # END_YOUR_CODE
 
 # Abbreviation
 better = betterEvaluationFunction
 
 # Problem 4b : Describe your evaluation function.
+"""
+I wanted my evaluation function to work very similarly to the minimax function except when there are no ghosts within x moves, move towards the nearest piece of food.
+The high level motivation is still to stay alive, but when the ghosts are further away the motivation should change. 
+"""
